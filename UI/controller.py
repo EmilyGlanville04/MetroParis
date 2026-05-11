@@ -8,9 +8,40 @@ class Controller:
         # the model, which implements the logic of the program and holds the data
         self._model = model
         self._fermataPartenza = None
+        self._fermataArrivo = None
+
+    def handleTrovaPercorso(self, e):
+        if self._fermataPartenza is None or self._fermataArrivo is None:
+            self._view.lst_result.controls.clear()
+            (self._view.lst_result.controls.append
+             (ft.Text("Attenzione, necesario"
+                      "selezionare fermate di "
+                      "partenza ed arrivo.", color="red")))
+            self._view.update_page()
+            return
+
+        totTime, optPath = self._model.getShorterstPath(self._fermataPartenza,
+                                                        self._fermataArrivo)
+
+        if optPath == []:
+            self._view.lst_result.controls.clear()
+            self._view.lst_result.controls.append(
+                ft.Text(f"Non ho trovato un cammino fra {self._fermataPartenza} e "
+                        f"{self._fermataArrivo}.", color="orange"))
+            return
+
+        self._view.lst_result.controls.clear()
+        self._view.lst_result.controls.append(
+            ft.Text(f"Ho trovato un cammino fra {self._fermataPartenza} e "
+                        f"{self._fermataArrivo} che impiega {totTime} minuti.", color="green"))
+        self._view.lst_result.controls.append(ft.Text("Di seguito la lista di fermate:"))
+        for v in optPath:
+            self._view.lst_result.controls.append(ft.Text(v))
+        self._view.update_page()
+
 
     def handleCreaGrafo(self,e):
-        self._model.buildGraph()
+        self._model.buildGraphPesato()
         self._view.lst_result.controls.clear()
         self._view.lst_result.controls.append(ft.Text("Grafo correttamente creato."))
         self._view.lst_result.controls.append(ft.Text(f"Il grafo è costituito da {self._model.get_numnodi()} nodi."))
@@ -24,12 +55,14 @@ class Controller:
                 ft.Text("Attenzione, non è stata fatta una scelta di stazione di partenza.", color="red"))
             self._view.update_page()
             return
+
         nodes = self._model.getBFSNodesFromEdges(self._fermataPartenza)
         self._view.lst_result.controls.clear()
         self._view.lst_result.controls.append(ft.Text(f"Di seguito i nodi raggiungibili da {self._fermataPartenza}"))
         for n in nodes:
             self._view.lst_result.controls.append(ft.Text(n))
         self._view.update_page()
+
 
     def loadFermate(self, dd: ft.Dropdown()):
         fermate = self._model.fermate
